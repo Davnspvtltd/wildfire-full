@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire Prediction</title>
+    <script>
+    async function submitForm() {
+    let temp = parseFloat(document.getElementById("temp").value);
+    let rh = parseFloat(document.getElementById("rh").value);
+    let wind = parseFloat(document.getElementById("wind").value);
+    let rain = parseFloat(document.getElementById("rain").value);
+    let ffmc = parseFloat(document.getElementById("ffmc").value);
+    let dmc = parseFloat(document.getElementById("dmc").value);
+    let dc = parseFloat(document.getElementById("dc").value);
+    let isi = parseFloat(document.getElementById("isi").value);
+
+    let response = await fetch('/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            temp: temp,
+            rh: rh,
+            wind: wind,
+            rain: rain,
+            ffmc: ffmc,
+            dmc: dmc,
+            dc: dc,
+            isi: isi
+        })
+    });
+
+    let manualResult = await response.json();
+    document.getElementById("result").innerHTML = JSON.stringify(manualResult, null, 2);
+}
+
+
+
+        async function getPrediction() {
+            let location = document.getElementById("location").value;
+            let startDate = document.getElementById("start_date").value;
+            let endDate = document.getElementById("end_date").value;
+            
+            let response = await fetch("/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ location, startDate, endDate })
+            });
+            
+            let result = await response.json();
+            document.getElementById("output").innerHTML = JSON.stringify(result, null, 2);
+        }
+    </script>
+</head>
+<body>
+    <h1>Wildfire Prediction System</h1>
+    <label>Location:</label>
+    <input type="text" id="location" placeholder="Enter location" required><br>
+    <label>Start Date:</label>
+    <input type="date" id="start_date" required><br>
+    <label>End Date:</label>
+    <input type="date" id="end_date" required><br>
+    <button onclick="getPrediction()">Predict</button>
+    <h3>Prediction Results:</h3>
+    <pre id="output"></pre>
+    <br>
+    <br>
+    <form onsubmit="submitForm(); return false;">
+
+        <label>Temperature (°C): <input type="number" id="temp" step="0.01" required></label><br>
+        <label>Relative Humidity (%): <input type="number" id="rh" step="0.01" required></label><br>
+        <label>Wind Speed (mph): <input type="number" id="wind" step="0.01" required></label><br>
+        <label>Rainfall (inches): <input type="number" id="rain" step="0.01" required></label><br>
+        <label>FFMC: <input type="number" id="ffmc" step="0.01" required></label><br>
+        <label>DMC: <input type="number" id="dmc" step="0.01" required></label><br>
+        <label>DC: <input type="number" id="dc" step="0.01" required></label><br>
+        <label>ISI: <input type="number" id="isi" step="0.01" required></label><br>
+        <button type="submit">Predict</button>
+    </form>
+
+    <div id="result"></div>
+</body>
+</html>
