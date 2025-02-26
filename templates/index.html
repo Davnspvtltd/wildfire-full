@@ -4,80 +4,696 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wildfire Prediction</title>
-    <script>
-    async function submitForm() {
-    let temp = parseFloat(document.getElementById("temp").value);
-    let rh = parseFloat(document.getElementById("rh").value);
-    let wind = parseFloat(document.getElementById("wind").value);
-    let rain = parseFloat(document.getElementById("rain").value);
-    let ffmc = parseFloat(document.getElementById("ffmc").value);
-    let dmc = parseFloat(document.getElementById("dmc").value);
-    let dc = parseFloat(document.getElementById("dc").value);
-    let isi = parseFloat(document.getElementById("isi").value);
+    <link rel="stylesheet" href="">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
 
-    let response = await fetch('/manual', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            temp: temp,
-            rh: rh,
-            wind: wind,
-            rain: rain,
-            ffmc: ffmc,
-            dmc: dmc,
-            dc: dc,
-            isi: isi
-        })
-    });
+<style>
+    /* General Styles */
+    body {
+        font-family: 'Arial', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #ffffff, #00a2ff); /* Add your background image */
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: #333;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        
+    }
 
-    let manualResult = await response.json();
-    document.getElementById("result").innerHTML = JSON.stringify(manualResult, null, 2);
+    .container {
+        padding: 2rem;
+        border-radius: 10px;
+        max-width: 1200px;
+        width: 100%;
+        backdrop-filter: blur(10px);
+        position: relative;    
+    }
+
+    h1 {
+        text-align: center;
+        color: #000000;
+        margin-bottom: 1.5rem;
+        font-size: 2.5rem;
+    }
+
+    h2 {
+        color: #007BFF;
+        margin-bottom: 1rem;
+        font-size: 1.8rem;
+    }
+
+    .button-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+        gap: 1rem;
+    }
+
+    .main-btn {
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .main-btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    .section {
+        display: none;
+        margin-top: 1.5rem;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #333;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .close-btn:hover {
+        color: #007BFF;
+    }
+
+    label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #555;
+        font-size: 1rem;
+    }
+
+    input[type="number"],
+    input[type="text"],
+    input[type="date"] {
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        color: #333;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    input[type="number"]:focus,
+    input[type="text"]:focus,
+    input[type="date"]:focus {
+        outline: none;
+        border-color: #007BFF;
+    }
+
+    .submit-btn {
+        background-color: #007BFF;
+        color: #fff;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .submit-btn:hover {
+        background-color: #0056b3;
+        transform: translateY(-2px);
+    }
+
+    .loading {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-top: 1rem;
+    }
+
+    form {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-gap: 20px;
+    margin-bottom: 20px;
 }
 
+    .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007BFF;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+    }
 
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    #result,
+    #output {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background-color: #ffffff00;
+        border-radius: 5px;
+        color: #333;
+        font-family: 'Courier New', Courier, monospace;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .info-container {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .result-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .result-item strong {
+        display: inline-block;
+        width: 150px;
+    }
+
+    .forecast-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .forecast-table th,
+    .forecast-table td {
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    .forecast-table th {
+        background-color: #007BFF;
+        color: #fff;
+    }
+
+    .forecast-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    .forecast-table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .chart-container {
+        margin-top: 2rem;
+    }
+</style>
+<body><center>
+    <div class="container">
+        <h1>Wildfire Prediction System</h1>
+        <div class="button-container">
+            <button onclick="showSection('manual')" class="main-btn">Manual</button>
+            <button onclick="showSection('forecast')" class="main-btn">Forecast</button>
+        </div>
+
+        <!-- Manual Section -->
+        <div id="manual-class" class="section">
+            <div class="section-header">
+                <h2>Manual Prediction</h2>
+                <button class="close-btn" onclick="closeSection('manual')">×</button>
+            </div>
+            <form onsubmit="submitForm(); return false;">
+                <label>Temperature (°C): <input type="number" id="temp" step="0.01" required></label>
+                <label>Relative Humidity (%): <input type="number" id="rh" step="0.01" required></label>
+                <label>Wind Speed (mph): <input type="number" id="wind" step="0.01" required></label>
+                <label>Rainfall (inches): <input type="number" id="rain" step="0.01" required></label>
+                <label>FFMC: <input type="number" id="ffmc" step="0.01" required></label>
+                <label>DMC: <input type="number" id="dmc" step="0.01" required></label>
+                <label>DC: <input type="number" id="dc" step="0.01" required></label>
+                <label>ISI: <input type="number" id="isi" step="0.01" required></label>
+                <button type="submit" class="submit-btn">Predict</button>
+            </form>
+            <div id="loading_manual" class="loading">
+                <div class="loader"></div>
+                <p>Processing...</p>
+            </div>
+            <div id="result"></div>
+        </div>
+
+        <!-- Forecast Section -->
+        <div id="forecast" class="section">
+            <div class="section-header">
+                <h2>Forecast Prediction</h2>
+                <button class="close-btn" onclick="closeSection('forecast')">×</button>
+            </div>
+            <label>Location:</label>
+            <input type="text" id="location" placeholder="Enter location" required>
+            <label>Start Date:</label>
+            <input type="date" id="start_date" required>
+            <label>End Date:</label>
+            <input type="date" id="end_date" required>
+            <button onclick="getPrediction()" class="submit-btn">Predict</button>
+            <div id="loading_forecast" class="loading">
+                <div class="loader"></div>
+                <p>Fetching forecast...</p>
+            </div>
+            <div id="output"></div>
+            <div class="chart-container">
+                <canvas id="forecastChart"></canvas>
+            </div>
+        </div>
+
+            <!-- Additional Information Containers -->
+    <div class="info-container">
+        <h2>What is Wildfire Prediction?</h2>
+        <p>Wildfire prediction helps forecast fire risks by analyzing environmental factors like temperature, humidity, wind speed, and rainfall.</p>
+    </div>
+
+    <div class="info-container">
+        <h2>How Does This System Work?</h2>
+        <p>This system uses machine learning models and weather data to predict fire risks, helping authorities take preventive actions.</p>
+    </div>
+
+    <div class="info-container">
+        <h2>Why Is It Important?</h2>
+        <p>Early prediction of wildfires can help reduce damage to forests, wildlife, and human settlements, improving disaster response and mitigation.</p>
+    </div>
+</center>
+    </div>
+
+    <script>
+        function showSection(section) {
+            document.getElementById("manual-class").style.display = section === "manual" ? "block" : "none";
+            document.getElementById("forecast").style.display = section === "forecast" ? "block" : "none";
+        }
+
+        function closeSection(section) {
+            document.getElementById(`${section}-class`).style.display = "none";
+        }
+
+        async function submitForm() {
+            document.getElementById("loading_manual").style.display = "flex";
+
+            let temp = parseFloat(document.getElementById("temp").value);
+            let rh = parseFloat(document.getElementById("rh").value);
+            let wind = parseFloat(document.getElementById("wind").value);
+            let rain = parseFloat(document.getElementById("rain").value);
+            let ffmc = parseFloat(document.getElementById("ffmc").value);
+            let dmc = parseFloat(document.getElementById("dmc").value);
+            let dc = parseFloat(document.getElementById("dc").value);
+            let isi = parseFloat(document.getElementById("isi").value);
+
+            let response = await fetch('/manual', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ temp, rh, wind, rain, ffmc, dmc, dc, isi })
+            });
+
+            let manualResult = await response.json();
+            displayManualResult(manualResult);
+            document.getElementById("loading_manual").style.display = "none";
+        }
+
+        function displayManualResult(result) {
+            let resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                <div class="result-item"><strong>Fire Weather Index (FWI):</strong> ${result.fireweather_index.toFixed(2)}</div>
+                <div class="result-item"><strong>Fire Percentage:</strong> ${result.fireweather_percentage.toFixed(2)}%</div>
+                <div class="result-item"><strong>Prediction:</strong> ${result.prediction}</div>
+            `;
+        }
 
         async function getPrediction() {
+            document.getElementById("loading_forecast").style.display = "flex";
+
             let location = document.getElementById("location").value;
             let startDate = document.getElementById("start_date").value;
             let endDate = document.getElementById("end_date").value;
-            
+
             let response = await fetch("/predict", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ location, startDate, endDate })
             });
-            
+
             let result = await response.json();
-            document.getElementById("output").innerHTML = JSON.stringify(result, null, 2);
+            displayForecastResult(result);
+            document.getElementById("loading_forecast").style.display = "none";
         }
+
+        function displayForecastResult(result) {
+            let outputDiv = document.getElementById("output");
+            let tableHTML = `
+                <table class="forecast-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>FWI</th>
+                            <th>Build-Up Index</th>
+                            <th>Fire Risk</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${result.map(item => `
+                            <tr>
+                                <td>${item.date}</td>
+                                <td>${item.FIRE_WEATHER_INDEX.toFixed(2)}</td>
+                                <td>${item.BUILD_UP_INDEX.toFixed(2)}</td>
+                                <td>${item.FIRE_RISK}</td>
+                            </tr>
+                        `).join("")}
+                    </tbody>
+                </table>
+            `;
+            outputDiv.innerHTML = tableHTML;
+
+            // Render Chart
+            renderChart(result);
+        }
+
+        function renderChart(data) {
+            let ctx = document.getElementById('forecastChart').getContext('2d');
+            let dates = data.map(item => item.date);
+            let fwi = data.map(item => item.FIRE_WEATHER_INDEX);
+            let buildUpIndex = data.map(item => item.BUILD_UP_INDEX);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Fire Weather Index (FWI)',
+                            data: fwi,
+                            borderColor: '#007BFF',
+                            fill: false
+                        },
+                        {
+                            label: 'Build-Up Index',
+                            data: buildUpIndex,
+                            borderColor: '#FF6384',
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        function renderChart(data) {
+    let ctx = document.getElementById('forecastChart').getContext('2d');
+    let dates = data.map(item => item.date);
+    let fwi = data.map(item => item.FIRE_WEATHER_INDEX);
+    let buildUpIndex = data.map(item => item.BUILD_UP_INDEX);
+
+    // Destroy existing chart instance if it exists
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    // Create a new Chart instance
+    window.myChart = new Chart(ctx, {
+        type: 'line', // Default to line chart
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Fire Weather Index (FWI)',
+                    data: fwi,
+                    borderColor: '#007BFF',
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    fill: false,
+                    yAxisID: 'y-axis-fwi' // Assign to FWI axis
+                },
+                {
+                    label: 'Build-Up Index',
+                    data: buildUpIndex,
+                    borderColor: '#FF6384',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    yAxisID: 'y-axis-bui' // Assign to Build-Up Index axis
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                'y-axis-fwi': {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Fire Weather Index (FWI)'
+                    },
+                    grid: {
+                        drawOnChartArea: false // Only show grid for the left axis
+                    }
+                },
+                'y-axis-bui': {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Build-Up Index'
+                    },
+                    grid: {
+                        drawOnChartArea: false // Only show grid for the right axis
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+
+    // Add buttons to switch between chart types
+    addChartTypeButtons(data);
+}
+
+// Function to add buttons for switching chart types
+function addChartTypeButtons(data) {
+    let buttonContainer = document.createElement('div');
+    buttonContainer.style.marginTop = '1rem';
+    buttonContainer.style.textAlign = 'center';
+
+    let lineChartButton = document.createElement('button');
+    lineChartButton.innerText = 'Line Chart';
+    lineChartButton.className = 'submit-btn';
+    lineChartButton.onclick = () => renderLineChart(data);
+
+    let barChartButton = document.createElement('button');
+    barChartButton.innerText = 'Bar Chart (FWI)';
+    barChartButton.className = 'submit-btn';
+    barChartButton.onclick = () => renderBarChart(data);
+
+    let dualAxisButton = document.createElement('button');
+    dualAxisButton.innerText = 'Dual Axis Chart';
+    dualAxisButton.className = 'submit-btn';
+    dualAxisButton.onclick = () => renderDualAxisChart(data);
+
+    buttonContainer.appendChild(lineChartButton);
+    buttonContainer.appendChild(barChartButton);
+    buttonContainer.appendChild(dualAxisButton);
+
+    let chartContainer = document.querySelector('.chart-container');
+    chartContainer.appendChild(buttonContainer);
+}
+
+// Function to render a line chart
+function renderLineChart(data) {
+    let ctx = document.getElementById('forecastChart').getContext('2d');
+    let dates = data.map(item => item.date);
+    let fwi = data.map(item => item.FIRE_WEATHER_INDEX);
+    let buildUpIndex = data.map(item => item.BUILD_UP_INDEX);
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Fire Weather Index (FWI)',
+                    data: fwi,
+                    borderColor: '#007BFF',
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    fill: false
+                },
+                {
+                    label: 'Build-Up Index',
+                    data: buildUpIndex,
+                    borderColor: '#FF6384',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Function to render a bar chart for FWI
+function renderBarChart(data) {
+    let ctx = document.getElementById('forecastChart').getContext('2d');
+    let dates = data.map(item => item.date);
+    let fwi = data.map(item => item.FIRE_WEATHER_INDEX);
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Fire Weather Index (FWI)',
+                    data: fwi,
+                    backgroundColor: '#007BFF',
+                    borderColor: '#007BFF',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Function to render a dual-axis chart
+function renderDualAxisChart(data) {
+    let ctx = document.getElementById('forecastChart').getContext('2d');
+    let dates = data.map(item => item.date);
+    let fwi = data.map(item => item.FIRE_WEATHER_INDEX);
+    let buildUpIndex = data.map(item => item.BUILD_UP_INDEX);
+
+    if (window.myChart) {
+        window.myChart.destroy();
+    }
+
+    window.myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [
+                {
+                    label: 'Fire Weather Index (FWI)',
+                    data: fwi,
+                    borderColor: '#007BFF',
+                    backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                    fill: false,
+                    yAxisID: 'y-axis-fwi'
+                },
+                {
+                    label: 'Build-Up Index',
+                    data: buildUpIndex,
+                    borderColor: '#FF6384',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    yAxisID: 'y-axis-bui'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                },
+                'y-axis-fwi': {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Fire Weather Index (FWI)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                },
+                'y-axis-bui': {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Build-Up Index'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+}
     </script>
-</head>
-<body>
-    <h1>Wildfire Prediction System</h1>
-    <label>Location:</label>
-    <input type="text" id="location" placeholder="Enter location" required><br>
-    <label>Start Date:</label>
-    <input type="date" id="start_date" required><br>
-    <label>End Date:</label>
-    <input type="date" id="end_date" required><br>
-    <button onclick="getPrediction()">Predict</button>
-    <h3>Prediction Results:</h3>
-    <pre id="output"></pre>
-    <br>
-    <br>
-    <form onsubmit="submitForm(); return false;">
-
-        <label>Temperature (°C): <input type="number" id="temp" step="0.01" required></label><br>
-        <label>Relative Humidity (%): <input type="number" id="rh" step="0.01" required></label><br>
-        <label>Wind Speed (mph): <input type="number" id="wind" step="0.01" required></label><br>
-        <label>Rainfall (inches): <input type="number" id="rain" step="0.01" required></label><br>
-        <label>FFMC: <input type="number" id="ffmc" step="0.01" required></label><br>
-        <label>DMC: <input type="number" id="dmc" step="0.01" required></label><br>
-        <label>DC: <input type="number" id="dc" step="0.01" required></label><br>
-        <label>ISI: <input type="number" id="isi" step="0.01" required></label><br>
-        <button type="submit">Predict</button>
-    </form>
-
-    <div id="result"></div>
 </body>
 </html>

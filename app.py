@@ -32,7 +32,7 @@ def predict():
     start_date = data["startDate"]
     end_date = data["endDate"]
     
-    weather_data = get_weather_data(location, start_date, end_date, api_key="9ZG928AFMYKNSXDJ4MZAP8HCS")
+    weather_data = get_weather_data(location, start_date, end_date, api_key="2CSTMQC8RF7TLSZ2ZTX6BUWF5")
     
     if weather_data:
         results = []

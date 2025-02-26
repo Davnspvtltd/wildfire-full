@@ -126,8 +126,8 @@ def check_fire_risk(fwi):
         return "No Risk"
 
 # Example Usage
-api_key = "9ZG928AFMYKNSXDJ4MZAP8HCS"
-location = "Tulare County, California"
+api_key = "2CSTMQC8RF7TLSZ2ZTX6BUWF5"
+location = "nilgiris , india"
 start_date = "2024-08-03"
 end_date = "2024-08-04"
 

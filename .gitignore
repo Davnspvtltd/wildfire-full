@@ -1,0 +1,30 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore virtual environment
+venv/
+.env
+*.venv
+
+# Ignore log files
+*.log
+
+# Ignore data files
+forest_fire.csv
+
+# Ignore environment variables and secrets
+.env
+config.json
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore Jupyter Notebook checkpoints (if used)
+.ipynb_checkpoints/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
